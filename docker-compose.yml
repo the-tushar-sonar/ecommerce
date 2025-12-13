@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  backend:
+    build: ./server
+    container_name: ecommerce-server
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./server/.env
+    depends_on:
+      - mongo
+      - ml-service
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    command: npm run dev
+
+  ml-service:
+    build: ./ml-service
+    container_name: ecommerce-ml-service
+    ports:
+      - "8000:8000"
+
+  mongo:
+    image: mongo:6
+    container_name: ecommerce-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
