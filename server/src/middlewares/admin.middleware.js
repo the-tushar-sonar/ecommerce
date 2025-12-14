@@ -1,15 +1,12 @@
+import User from "../modules/users/user.model.js";
 import ApiError from "../utils/ApiError.js";
 
-const isAdmin = (req, res, next) => {
-  try {
-    if (req.user.role !== "admin") {
-      throw new ApiError(403, "Admin access required");
-    }
-    next();
-  } catch (error) {
-    next(error);
+export const isAdmin = async (req, res, next) => {
+  const user = await User.findById(req.user);
+
+  if (!user || user.role !== "admin") {
+    return next(new ApiError(403, "Admin access required"));
   }
+
+  next();
 };
-
-export default isAdmin;
-
