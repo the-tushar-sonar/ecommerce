@@ -12,7 +12,7 @@ export const protect = (req, res, next) => {
   try {
     const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, env.JWT_SECRET);
-    req.user = decoded.userId;
+    req.user = decoded;
     next();
   } catch (err) {
     next(new ApiError(401, "Invalid token"));

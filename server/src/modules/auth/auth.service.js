@@ -19,13 +19,13 @@ export const registerUser = async ({ name, email, password }) => {
   });
 
   const token = jwt.sign(
-  {
-    id: user._id,
-    role: user.role,
-  },
-  process.env.JWT_SECRET,
-  { expiresIn: "7d" }
-);
+    {
+      id: user._id,
+      role: user.role,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
 
   return { user, token };
 };
@@ -41,13 +41,20 @@ export const loginUser = async ({ email, password }) => {
     throw new ApiError(401, "Invalid credentials");
   }
 
-  const token = generateToken(user._id);
+  const token = generateToken(user);
 
   return { user, token };
 };
 
-const generateToken = (userId) => {
-  return jwt.sign({ userId }, env.JWT_SECRET, {
-    expiresIn: "7d",
-  });
+const generateToken = (user) => {
+  return jwt.sign(
+    {
+      id: user._id,
+      role: user.role,
+    },
+    env.JWT_SECRET,
+    {
+      expiresIn: "7d",
+    }
+  );
 };
