@@ -8,9 +8,9 @@ import orderRoutes from "./modules/orders/order.routes.js";
 
 const router = Router();
 
-router.use("/api/auth", authRoutes);
+router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
-router.use("/api/products", productRoutes);
+router.use("/products", productRoutes);
 router.use("/cart", cartRoutes);
 router.use("/orders", orderRoutes);
 
