@@ -1,30 +1,70 @@
-import { registerUser, loginUser } from "./auth.service.js";
+import asyncHandler from "../../utils/asyncHandler.js";
 import ApiResponse from "../../utils/ApiResponse.js";
 
-export const register = async (req, res, next) => {
-  try {
-    const { name, email, password } = req.body;
+import {
+  registerUser,
+  loginUser,
+  refreshAccessToken,
+  logoutUser,
+} from "./auth.service.js";
 
-    const result = await registerUser({ name, email, password });
+export const register = asyncHandler(
+  async (req, res) => {
+    const result = await registerUser(req.body);
 
-    res.status(201).json(
-      new ApiResponse(201, "User registered successfully", result)
-    );
-  } catch (err) {
-    next(err);
+    res
+      .status(201)
+      .json(
+        new ApiResponse(
+          201,
+          result,
+          "Registration successful"
+        )
+      );
   }
-};
+);
 
-export const login = async (req, res, next) => {
-  try {
-    const { email, password } = req.body;
+export const login = asyncHandler(
+  async (req, res) => {
+    const result = await loginUser(req.body);
 
-    const result = await loginUser({ email, password });
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          result,
+          "Login successful"
+        )
+      );
+  }
+);
+
+export const refresh = asyncHandler(
+  async (req, res) => {
+    const result = await refreshAccessToken(
+      req.body.refreshToken
+    );
 
     res.status(200).json(
-      new ApiResponse(200, "Login successful", result)
+      new ApiResponse(
+        200,
+        result,
+        "Token refreshed successfully"
+      )
     );
-  } catch (err) {
-    next(err);
   }
-};
+);
+
+export const logout = asyncHandler(async (req, res) => {
+  await logoutUser(req.body.refreshToken);
+
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      null,
+      "Logout successful"
+    )
+  );
+}
+);

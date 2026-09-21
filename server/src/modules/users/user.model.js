@@ -5,7 +5,9 @@ const userSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
+      minlength: 2,
+      maxlength: 50,
     },
 
     email: {
@@ -13,27 +15,34 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
       lowercase: true,
-      index: true
+      trim: true,
+      index: true,
     },
 
     password: {
       type: String,
       required: true,
-      select: false   // IMPORTANT: hide password by default
+      minlength: 8,
+      select: false,
     },
 
     role: {
       type: String,
-      enum: ["user", "admin"],
-      default: "user"
+      enum: ["CUSTOMER", "ADMIN"],
+      default: "CUSTOMER",
+      index: true,
     },
 
     isActive: {
       type: Boolean,
-      default: true
-    }
+      default: true,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-export default mongoose.model("User", userSchema);
+const User = mongoose.model("User", userSchema);
+
+export default User;
