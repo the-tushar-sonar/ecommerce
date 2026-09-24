@@ -1,13 +1,63 @@
-import { Router } from "express";
-import { createProduct, getAllProducts, updateProduct, deleteProduct } from "./product.controller.js";
-import { protect } from "../../middlewares/auth.middleware.js";
-import { isAdmin } from "../../middlewares/admin.middleware.js";
+import express from "express";
 
-const router = Router();
+import {
+  createProductController,
+  getAllProductsController,
+  getProductByIdController,
+  updateProductController,
+  deleteProductController,
+  updateProductStatusController,
+} from "./product.controller.js";
 
-router.post("/", protect, isAdmin, createProduct);
-router.patch("/:id", protect, isAdmin, updateProduct);
-router.delete("/:id", protect, isAdmin, deleteProduct);
-router.get("/", getAllProducts);
+import authenticate from "../../middlewares/auth.middleware.js";
+import requireRole from "../../middlewares/role.middleware.js";
+import validate from "../../middlewares/validate.middleware.js";
+
+import {
+  createProductSchema,
+  updateProductSchema,
+  updateProductStatusSchema,
+} from "./product.validation.js";
+
+import asyncHandler from "../../utils/asyncHandler.js";
+
+const router = express.Router();
+
+// Public routes
+router.get("/", asyncHandler(getAllProductsController));
+
+router.get("/:id", asyncHandler(getProductByIdController));
+
+// Admin-only routes
+router.post(
+  "/",
+  authenticate,
+  requireRole("ADMIN"),
+  validate(createProductSchema),
+  asyncHandler(createProductController),
+);
+
+router.patch(
+  "/:id/status",
+  authenticate,
+  requireRole("ADMIN"),
+  validate(updateProductStatusSchema),
+  asyncHandler(updateProductStatusController),
+);
+
+router.patch(
+  "/:id",
+  authenticate,
+  requireRole("ADMIN"),
+  validate(updateProductSchema),
+  asyncHandler(updateProductController),
+);
+
+router.delete(
+  "/:id",
+  authenticate,
+  requireRole("ADMIN"),
+  asyncHandler(deleteProductController),
+);
 
 export default router;
