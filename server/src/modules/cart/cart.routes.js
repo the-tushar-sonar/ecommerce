@@ -1,17 +1,42 @@
-import { Router } from "express";
-import { protect } from "../../middlewares/auth.middleware.js";
+import express from "express";
+
 import {
-  getCart,
-  addToCart,
-  removeFromCart,
+  getCartController,
+  addToCartController,
+  updateCartItemController,
+  removeFromCartController,
+  clearCartController,
 } from "./cart.controller.js";
 
-const router = Router();
+import authenticate from "../../middlewares/auth.middleware.js";
+import validate from "../../middlewares/validate.middleware.js";
 
-router.use(protect);
+import { addToCartSchema, updateCartItemSchema } from "./cart.validation.js";
 
-router.get("/", getCart);
-router.post("/", addToCart);
-router.delete("/:productId", removeFromCart);
+import asyncHandler from "../../utils/asyncHandler.js";
+
+const router = express.Router();
+
+// All cart routes require authentication
+router.use(authenticate);
+
+// Get current user's cart
+router.get("/", asyncHandler(getCartController));
+
+// Add product to cart
+router.post("/", validate(addToCartSchema), asyncHandler(addToCartController));
+
+// Update product quantity
+router.patch(
+  "/:productId",
+  validate(updateCartItemSchema),
+  asyncHandler(updateCartItemController),
+);
+
+// Remove product from cart
+router.delete("/:productId", asyncHandler(removeFromCartController));
+
+// Clear entire cart
+router.delete("/", asyncHandler(clearCartController));
 
 export default router;
