@@ -366,3 +366,5 @@ docker-data/
 # OS
 .DS_Store
 Thumbs.db
+
+account.txt

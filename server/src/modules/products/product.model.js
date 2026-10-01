@@ -30,6 +30,13 @@ const productSchema = new mongoose.Schema(
       default: 0,
     },
 
+    reservedStock: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
+
     category: {
       type: String,
       required: true,
@@ -51,7 +58,7 @@ const productSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 productSchema.index({

@@ -3,6 +3,7 @@ services:
     image: mongo:8
     container_name: ecommerce-mongo
     restart: unless-stopped
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     ports:
       - "27017:27017"
     volumes:
