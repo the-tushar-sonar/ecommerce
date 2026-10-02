@@ -1,14 +1,63 @@
 import Product from "./product.model.js";
+import {
+  getCache,
+  setCache,
+  deleteCache,
+  deleteCacheByPattern,
+} from "../../utils/redis.js";
+
+const buildProductListCacheKey = (query) => {
+  const { search, category, minPrice, maxPrice, sort, page, limit } = query;
+
+  const params = new URLSearchParams();
+
+  if (search !== undefined) params.set("search", search);
+  if (category !== undefined) params.set("category", category);
+  if (minPrice !== undefined) params.set("minPrice", String(minPrice));
+  if (maxPrice !== undefined) params.set("maxPrice", String(maxPrice));
+
+  params.set("sort", sort);
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+
+  return `products:list:${params.toString()}`;
+};
 
 export const createProduct = async (data) => {
-  return Product.create(data);
+  const product = await Product.create(data);
+
+  await deleteCacheByPattern("products:list:*");
+
+  return product;
 };
 
 export const getProductById = async (id) => {
-  return Product.findById(id);
+  const cacheKey = `product:${id}`;
+
+  const cachedProduct = await getCache(cacheKey);
+
+  if (cachedProduct) {
+    return cachedProduct;
+  }
+
+  const product = await Product.findById(id);
+
+  if (product) {
+    await setCache(cacheKey, product.toObject(), 300);
+  }
+
+  return product;
 };
 
 export const getAllProducts = async (query) => {
+  const cacheKey = buildProductListCacheKey(query);
+
+  const cachedProducts = await getCache(cacheKey);
+
+  if (cachedProducts) {
+    return cachedProducts;
+  }
+
   const { search, category, minPrice, maxPrice, sort, page, limit } = query;
 
   const filter = { isActive: true };
@@ -52,7 +101,7 @@ export const getAllProducts = async (query) => {
     Product.countDocuments(filter),
   ]);
 
-  return {
+  const result = {
     products,
     pagination: {
       total,
@@ -63,21 +112,39 @@ export const getAllProducts = async (query) => {
       hasPreviousPage: page > 1,
     },
   };
+
+  await setCache(cacheKey, result, 120);
+
+  return result;
 };
 
 export const updateProduct = async (id, data) => {
-  return Product.findByIdAndUpdate(id, data, {
+  const product = await Product.findByIdAndUpdate(id, data, {
     new: true,
     runValidators: true,
   });
+
+  if (product) {
+    await deleteCache(`product:${id}`);
+    await deleteCacheByPattern("products:list:*");
+  }
+
+  return product;
 };
 
 export const deleteProduct = async (id) => {
-  return Product.findByIdAndDelete(id);
+  const product = await Product.findByIdAndDelete(id);
+
+  if (product) {
+    await deleteCache(`product:${id}`);
+    await deleteCacheByPattern("products:list:*");
+  }
+
+  return product;
 };
 
 export const updateProductStatus = async (id, isActive) => {
-  return Product.findByIdAndUpdate(
+  const product = await Product.findByIdAndUpdate(
     id,
     { isActive },
     {
@@ -85,4 +152,11 @@ export const updateProductStatus = async (id, isActive) => {
       runValidators: true,
     },
   );
+
+  if (product) {
+    await deleteCache(`product:${id}`);
+    await deleteCacheByPattern("products:list:*");
+  }
+
+  return product;
 };
