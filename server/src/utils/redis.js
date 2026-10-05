@@ -21,7 +21,7 @@ export const deleteCache = async (key) => {
 };
 
 export const deleteCacheByPattern = async (pattern) => {
-  let cursor = 0;
+  let cursor = "0";
 
   do {
     const result = await redis.scan(cursor, {
@@ -34,5 +34,5 @@ export const deleteCacheByPattern = async (pattern) => {
     if (result.keys.length > 0) {
       await redis.del(result.keys);
     }
-  } while (cursor !== 0);
+  } while (cursor !== "0");
 };

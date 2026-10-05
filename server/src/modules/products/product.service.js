@@ -1,4 +1,5 @@
 import Product from "./product.model.js";
+import Category from "../categories/category.model.js";
 import {
   getCache,
   setCache,
@@ -24,6 +25,16 @@ const buildProductListCacheKey = (query) => {
 };
 
 export const createProduct = async (data) => {
+  const categoryExists = await Category.exists({
+    _id: data.category,
+  });
+
+  if (!categoryExists) {
+    const error = new Error("Category not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
   const product = await Product.create(data);
 
   await deleteCacheByPattern("products:list:*");
@@ -40,7 +51,10 @@ export const getProductById = async (id) => {
     return cachedProduct;
   }
 
-  const product = await Product.findById(id);
+  const product = await Product.findById(id).populate(
+    "category",
+    "name description isActive",
+  );
 
   if (product) {
     await setCache(cacheKey, product.toObject(), 300);
@@ -96,7 +110,11 @@ export const getAllProducts = async (query) => {
   const skip = (page - 1) * limit;
 
   const [products, total] = await Promise.all([
-    Product.find(filter).sort(sortOptions[sort]).skip(skip).limit(limit),
+    Product.find(filter)
+      .populate("category", "name description isActive")
+      .sort(sortOptions[sort])
+      .skip(skip)
+      .limit(limit),
 
     Product.countDocuments(filter),
   ]);
@@ -119,6 +137,18 @@ export const getAllProducts = async (query) => {
 };
 
 export const updateProduct = async (id, data) => {
+  if (data.category !== undefined) {
+    const categoryExists = await Category.exists({
+      _id: data.category,
+    });
+
+    if (!categoryExists) {
+      const error = new Error("Category not found");
+      error.statusCode = 404;
+      throw error;
+    }
+  }
+
   const product = await Product.findByIdAndUpdate(id, data, {
     new: true,
     runValidators: true,

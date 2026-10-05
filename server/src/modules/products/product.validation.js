@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+const objectIdSchema = z
+  .string()
+  .regex(/^[0-9a-fA-F]{24}$/, "Invalid category ID");
+
 export const createProductSchema = z.object({
   name: z
     .string()
@@ -21,7 +25,7 @@ export const createProductSchema = z.object({
     .min(0, "Stock cannot be negative")
     .default(0),
 
-  category: z.string().trim().min(1, "Category is required"),
+  category: objectIdSchema,
 
   imageUrl: z.string().trim().default(""),
 
@@ -33,7 +37,7 @@ export const updateProductSchema = createProductSchema.partial();
 export const productQuerySchema = z.object({
   search: z.string().trim().optional(),
 
-  category: z.string().trim().optional(),
+  category: objectIdSchema.optional(),
 
   minPrice: z.coerce
     .number()
