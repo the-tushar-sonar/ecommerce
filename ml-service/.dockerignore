@@ -1,0 +1,30 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Git and editor files
+.git/
+.vscode/
+.idea/
+.history/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Logs and generated files
+*.log
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/

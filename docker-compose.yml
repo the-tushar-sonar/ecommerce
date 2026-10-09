@@ -8,6 +8,12 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 10s
+      start_period: 30s
+      retries: 10
 
   redis:
     image: redis:7-alpine
@@ -17,6 +23,18 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+
+  ml-service:
+    build:
+      context: ./ml-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      MONGO_URI: "mongodb://mongo:27017/ecommerce?directConnection=true"
+    depends_on:
+      mongo:
+        condition: service_healthy
 
 volumes:
   mongo_data:
