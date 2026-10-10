@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>E-commerce Analytics</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 32px;
+            font-family: system-ui, sans-serif;
+            background: #f4f6fa;
+            color: #182230;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        a { color: #2457c5; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+        .card, section {
+            background: white;
+            padding: 20px;
+            border: 1px solid #e2e7ef;
+            border-radius: 12px;
+        }
+        .card h2 {
+            margin: 8px 0 0;
+            font-size: 28px;
+        }
+        .muted { color: #637083; font-size: 14px; }
+        section { margin: 18px 0; }
+        li { padding: 5px 0; }
+    </style>
+</head>
+<body>
+    <header>
+        <div>
+            <h1>E-commerce Analytics</h1>
+            <p class="muted">Read-only overview of the MongoDB store</p>
+        </div>
+        <a href="{% url 'admin:index' %}">Open Django Admin</a>
+    </header>
+
+    <div class="grid">
+        <div class="card">
+            <div class="muted">Products</div>
+            <h2>{{ total_products }}</h2>
+            <p class="muted">{{ active_products }} active</p>
+        </div>
+        <div class="card">
+            <div class="muted">Categories</div>
+            <h2>{{ total_categories }}</h2>
+        </div>
+        <div class="card">
+            <div class="muted">Users</div>
+            <h2>{{ total_users }}</h2>
+            <p class="muted">{{ active_users }} active</p>
+        </div>
+        <div class="card">
+            <div class="muted">Orders</div>
+            <h2>{{ total_orders }}</h2>
+        </div>
+        <div class="card">
+            <div class="muted">Paid payments (INR)</div>
+            <h2>₹{{ paid_revenue }}</h2>
+            <p class="muted">Sum of payment records marked PAID</p>
+        </div>
+        <div class="card">
+            <div class="muted">Active products with zero stock</div>
+            <h2>{{ zero_stock_products }}</h2>
+            <p class="muted">{{ low_stock_products }} more with stock from 1 to 5</p>
+        </div>
+    </div>
+
+    <section>
+        <h2>Orders by status</h2>
+        {% if order_statuses %}
+            <ul>
+            {% for status, count in order_statuses.items %}
+                <li>{{ status }}: <strong>{{ count }}</strong></li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>No orders found.</p>
+        {% endif %}
+    </section>
+
+    <section>
+        <h2>Payments by status</h2>
+        {% if payment_statuses %}
+            <ul>
+            {% for status, count in payment_statuses.items %}
+                <li>{{ status }}: <strong>{{ count }}</strong></li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>No payments found.</p>
+        {% endif %}
+    </section>
+</body>
+</html>
