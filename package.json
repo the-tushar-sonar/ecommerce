@@ -1,0 +1,7 @@
+{
+  "name": "ecommerce-project",
+  "private": true,
+  "scripts": {
+    "test": "npm --prefix server test && PYTHONPATH=ml-service ml-service/.venv/bin/python -m pytest ml-service/tests -v"
+  }
+}
