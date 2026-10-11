@@ -23,6 +23,11 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   ml-service:
     build:
@@ -32,6 +37,47 @@ services:
       - "8000:8000"
     environment:
       MONGO_URI: "mongodb://mongo:27017/ecommerce?directConnection=true"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  api:
+    build:
+      context: ./server
+    restart: unless-stopped
+    env_file:
+      - ./server/.env
+    environment:
+      NODE_ENV: production
+      PORT: "5000"
+      MONGO_URI: "mongodb://mongo:27017/ecommerce?directConnection=true"
+      REDIS_URL: "redis://redis:6379"
+      ML_SERVICE_URL: "http://ml-service:8000"
+      DJANGO_ADMIN_URL: "http://django-admin:8001"
+    ports:
+      - "5000:5000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ml-service:
+        condition: service_started
+
+  django-admin:
+    build:
+      context: ./django-admin
+    restart: unless-stopped
+    env_file:
+      - ./django-admin/.env
+    environment:
+      MONGO_URI: "mongodb://mongo:27017/ecommerce?directConnection=true"
+      DJANGO_ALLOWED_HOSTS: "127.0.0.1,localhost,django-admin"
+      DJANGO_DEBUG: "False"
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./django-admin/db.sqlite3:/app/db.sqlite3
     depends_on:
       mongo:
         condition: service_healthy
