@@ -2,38 +2,84 @@ import Cart from "./cart.model.js";
 import Product from "../products/product.model.js";
 import ApiError from "../../utils/ApiError.js";
 
-export const getCartService = async (userId) => {
-  return await Cart.findOne({ user: userId }).populate("items.product");
+const populateCart = async (cart) => {
+  return cart.populate({
+    path: "items.product",
+    populate: {
+      path: "category",
+      select: "name description isActive",
+    },
+  });
 };
 
-export const addToCartService = async (userId, productId, quantity) => {
-  const product = await Product.findById(productId);
-  if (!product || !product.isActive) {
-    throw new ApiError(404, "Product not available");
-  }
-
+const getOrCreateCart = async (userId) => {
   let cart = await Cart.findOne({ user: userId });
 
   if (!cart) {
     cart = await Cart.create({
       user: userId,
-      items: [{ product: productId, quantity }],
+      items: [],
     });
-    return cart;
   }
 
-  const itemIndex = cart.items.findIndex(
-    (item) => item.product.toString() === productId,
+  return cart;
+};
+
+const getAvailableStock = (product) => {
+  return Math.max(0, product.stock - product.reservedStock);
+};
+
+const assertAvailableStock = (product, quantity) => {
+  const availableStock = getAvailableStock(product);
+
+  if (quantity > availableStock) {
+    throw new ApiError(
+      400,
+      `Only ${availableStock} unit(s) available for ${product.name}`,
+    );
+  }
+};
+
+export const getCartService = async (userId) => {
+  const cart = await getOrCreateCart(userId);
+  return populateCart(cart);
+};
+
+export const addToCartService = async (userId, productId, quantity) => {
+
+  const product = await Product.findOne({
+    _id: productId,
+    isActive: true,
+  });
+
+  if (!product) {
+    throw new ApiError(404, "Product not available");
+  }
+
+
+  let cart = await getOrCreateCart(userId);
+
+  const item = cart.items.find(
+    (cartItem) => cartItem.product.toString() === productId,
   );
 
-  if (itemIndex > -1) {
-    cart.items[itemIndex].quantity += quantity;
+  const newQuantity = (item?.quantity ?? 0) + quantity;
+
+
+  assertAvailableStock(product, newQuantity);
+
+  if (item) {
+    item.quantity = newQuantity;
   } else {
-    cart.items.push({ product: productId, quantity });
+    cart.items.push({
+      product: productId,
+      quantity,
+    });
   }
 
   await cart.save();
-  return cart;
+
+  return populateCart(cart);
 };
 
 export const updateCartItemService = async (userId, productId, quantity) => {
@@ -43,17 +89,30 @@ export const updateCartItemService = async (userId, productId, quantity) => {
     throw new ApiError(404, "Cart not found");
   }
 
-  const item = cart.items.find((item) => item.product.toString() === productId);
+  const item = cart.items.find(
+    (cartItem) => cartItem.product.toString() === productId,
+  );
 
   if (!item) {
     throw new ApiError(404, "Product not found in cart");
   }
 
+  const product = await Product.findOne({
+    _id: productId,
+    isActive: true,
+  });
+
+  if (!product) {
+    throw new ApiError(404, "Product not available");
+  }
+
+  assertAvailableStock(product, quantity);
+
   item.quantity = quantity;
 
   await cart.save();
 
-  return cart;
+  return populateCart(cart);
 };
 
 export const removeFromCartService = async (userId, productId) => {
@@ -64,7 +123,7 @@ export const removeFromCartService = async (userId, productId) => {
   }
 
   const itemExists = cart.items.some(
-    (item) => item.product.toString() === productId,
+    (cartItem) => cartItem.product.toString() === productId,
   );
 
   if (!itemExists) {
@@ -72,12 +131,12 @@ export const removeFromCartService = async (userId, productId) => {
   }
 
   cart.items = cart.items.filter(
-    (item) => item.product.toString() !== productId,
+    (cartItem) => cartItem.product.toString() !== productId,
   );
 
   await cart.save();
 
-  return cart;
+  return populateCart(cart);
 };
 
 export const clearCartService = async (userId) => {
@@ -91,5 +150,5 @@ export const clearCartService = async (userId) => {
 
   await cart.save();
 
-  return cart;
+  return populateCart(cart);
 };

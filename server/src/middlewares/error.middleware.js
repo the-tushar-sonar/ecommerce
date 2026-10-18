@@ -1,6 +1,7 @@
 import { env } from "../config/env.js";
 
 const errorHandler = (err, req, res, next) => {
+  // Keep full error details in server logs for debugging.
   console.error(err);
 
   let statusCode = err.statusCode || 500;
@@ -29,10 +30,7 @@ const errorHandler = (err, req, res, next) => {
     response.errors = err.errors;
   }
 
-  if (env.nodeEnv !== "production") {
-    response.stack = err.stack;
-  }
-
+  // Never expose stack traces in API responses.
   res.status(statusCode).json(response);
 };
 
