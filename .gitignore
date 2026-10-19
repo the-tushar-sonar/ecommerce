@@ -369,3 +369,7 @@ Thumbs.db
 
 account.txt
 test-payment.html
+
+# Keep frontend application source despite the generic virtualenv "lib" rule
+!/client/src/lib/
+!/client/src/lib/**
